@@ -33,11 +33,12 @@
 #include <cmath>
 #include <getopt.h>
 #include "util.hpp"
-
+#include <iostream>
+#include <thread>
 using namespace std;
 
 static int quiet = 0;
-
+   float**** Conc;
 static float RandomFloatPos() {
     // returns a random number between a given minimum and maximum
     float random = ((float) rand()) / (float) RAND_MAX;
@@ -561,7 +562,7 @@ int main(int argc, char *argv[]) {
     }
 
     // create 3D concentration matrix
-    float**** Conc;
+ 
     Conc = new float***[L];
     for (i1 = 0; i1 < 2; i1++) {
         Conc[i1] = new float**[L];
