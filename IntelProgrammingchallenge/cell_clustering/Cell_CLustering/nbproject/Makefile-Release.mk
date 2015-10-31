@@ -23,12 +23,12 @@ AS=as
 # Macros
 CND_PLATFORM=GNU-Linux-x86
 CND_DLIB_EXT=so
-CND_CONF=Debug
+CND_CONF=Release
 CND_DISTDIR=dist
 CND_BUILDDIR=build
 
 # Include project Makefile
-include cell_clustering-Makefile.mk
+include Makefile
 
 # Object Directory
 OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
@@ -36,7 +36,6 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/cell_clustering.o \
-	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/util.o
 
 
@@ -67,17 +66,12 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cell_clustering: ${OBJECTFILES}
 ${OBJECTDIR}/cell_clustering.o: cell_clustering.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -Inbproject -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/cell_clustering.o cell_clustering.cpp
-
-${OBJECTDIR}/main.o: main.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -Inbproject -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/cell_clustering.o cell_clustering.cpp
 
 ${OBJECTDIR}/util.o: util.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -Inbproject -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/util.o util.cpp
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/util.o util.cpp
 
 # Subprojects
 .build-subprojects:

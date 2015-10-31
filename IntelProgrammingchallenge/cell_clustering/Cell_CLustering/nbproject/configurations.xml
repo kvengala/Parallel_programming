@@ -12,7 +12,6 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>main.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -23,15 +22,20 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>cell_clustering-Makefile.mk</itemPath>
+      <itemPath>Makefile</itemPath>
     </logicalFolder>
+    <itemPath>BUILD-HOST-GEN</itemPath>
+    <itemPath>LICENSE.md</itemPath>
+    <itemPath>../Makefile</itemPath>
+    <itemPath>Makefile</itemPath>
+    <itemPath>README.md</itemPath>
     <itemPath>cell_clustering.cpp</itemPath>
     <itemPath>huge.cdc</itemPath>
     <itemPath>small.cdc</itemPath>
     <itemPath>util.cpp</itemPath>
     <itemPath>util.hpp</itemPath>
   </logicalFolder>
-  <projectmakefile>cell_clustering-Makefile.mk</projectmakefile>
+  <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="Debug" type="1">
       <toolsSet>
@@ -40,17 +44,20 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
-        <ccTool>
-          <incDir>
-            <pElem>nbproject</pElem>
-          </incDir>
-        </ccTool>
       </compileType>
+      <item path="../Makefile" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BUILD-HOST-GEN" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="LICENSE.md" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Makefile" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="README.md" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="cell_clustering.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="huge.cdc" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="small.cdc" ex="false" tool="3" flavor2="0">
       </item>
@@ -79,11 +86,19 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="../Makefile" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BUILD-HOST-GEN" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="LICENSE.md" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Makefile" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="README.md" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="cell_clustering.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="huge.cdc" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="small.cdc" ex="false" tool="3" flavor2="0">
       </item>

@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=cell_clustering
+PROJECTNAME=Cell_CLustering
 
 # Active Configuration
 DEFAULTCONF=Debug
