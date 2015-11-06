@@ -33,29 +33,38 @@
 #include <cmath>
 #include <getopt.h>
 #include "util.hpp"
-#include <thread>
+#include<thread>
 using namespace std;
 
 static int quiet = 0;
 
-typedef struct params{
-    float**** Conc;    
-    const int64_t  L;
-    const float    D;
-    const float    mu;
-    const int64_t  finalNumberCells;
+
+    const float    speed           ;
+    const int64_t  T               ;
+    const int64_t  L               ;
+    const float    D               ;
+    const float    mu               ;
+    const unsigned divThreshold    ;
+    const int64_t  finalNumberCells ;
+    const float    spatialRange     ;
+    const float    pathThreshold    ;
+
+    int i,c,d;
+    int i1, i2, i3, i4;
+
     float energy;   // value that quantifies the quality of the cell clustering output. The smaller this value, the better the clustering.
-    float** posAll=0;   // array of all 3 dimensional cell positions
+
+    float**posAll=0 ;   
+   
     float** currMov=0;  // array of all 3 dimensional cell movements at the last time point
+   
     float zeroFloat = 0.0;
+
     float pathTraveled[finalNumberCells];   // array keeping track of length of path traveled until cell divides
     int numberDivisions[finalNumberCells];  //array keeping track of number of division a cell has undergone
     int typesAll[finalNumberCells];     // array specifying cell type (+1 or -1)
-
-}*prms;
-
-prms *param;
-
+int64_t n = 1; // initially, there is one single cell
+ 
 
 
 static float RandomFloatPos() {
@@ -96,7 +105,7 @@ static stopwatch runDiffusionClusterStep_sw;
 static stopwatch getEnergy_sw;
 static stopwatch getCriterion_sw;
 
-static void produceSubstances(float**** Conc, float** posAll, int* typesAll, int L, int n) {
+static void produceSubstances() {
     produceSubstances_sw.reset();
 
     // increases the concentration of substances at the location of the cells
@@ -124,7 +133,7 @@ static void produceSubstances(float**** Conc, float** posAll, int* typesAll, int
     produceSubstances_sw.mark();
 }
 
-static void runDiffusionStep(float**** Conc, int L, float D) {
+static void runDiffusionStep() {
     runDiffusionStep_sw.reset();
     // computes the changes in substance concentrations due to diffusion
     int i1,i2,i3, subInd;
@@ -176,7 +185,7 @@ static void runDiffusionStep(float**** Conc, int L, float D) {
     runDiffusionStep_sw.mark();
 }
 
-static void runDecayStep(float**** Conc, int L, float mu) {
+static void runDecayStep() {
     runDecayStep_sw.reset();
     // computes the changes in substance concentrations due to decay
     int i1,i2,i3;
@@ -240,7 +249,7 @@ static int cellMovementAndDuplication(float** posAll, float* pathTraveled, int* 
     return currentNumberCells;
 }
 
-static void runDiffusionClusterStep(float**** Conc, float** movVec, float** posAll, int* typesAll, int n, int L, float speed) {
+static void runDiffusionClusterStep() {
     runDiffusionClusterStep_sw.reset();
     // computes movements of all cells based on gradients of the two substances
 
@@ -538,31 +547,19 @@ int main(int argc, char *argv[]) {
 
     print_params(&params, stderr);
 
-    const float    speed            = params.speed;
-    const int64_t  T                = params.T;
-    param->L                = params.L;
-    param->D               = params.D;
-    param->mu               = params.mu;
-    const unsigned divThreshold     = params.divThreshold;
-    const int64_t  finalNumberCells = params.finalNumberCells;
-    const float    spatialRange     = params.spatialRange;
-    const float    pathThreshold    = params.pathThreshold;
-    
-    int i,c,d;
-    int i1, i2, i3, i4;
-    
-    param->energy;   // value that quantifies the quality of the cell clustering output. The smaller this value, the better the clustering.
+    speed            = params.speed;
+    T                = params.T;
+    L                = params.L;
+    D                = params.D;
+    mu               = params.mu;
+    divThreshold     = params.divThreshold;
+    finalNumberCells = params.finalNumberCells;
+    spatialRange     = params.spatialRange;
+    pathThreshold    = params.pathThreshold;
+    posAll = new float*[finalNumberCells];
+    currMov = new float*[finalNumberCells]; // array of all cell movements in the last time step
 
-    param->posAll=0;   // array of all 3 dimensional cell positions
-    param->posAll = new float*[finalNumberCells];
-    param->currMov=0;  // array of all 3 dimensional cell movements at the last time point
-    param->currMov = new float*[finalNumberCells]; // array of all cell movements in the last time step
-    float zeroFloat = 0.0;
-   
-    param->pathTraveled[finalNumberCells];   // array keeping track of length of path traveled until cell divides
-    int numberDivisions[finalNumberCells];  //array keeping track of number of division a cell has undergone
-    int typesAll[finalNumberCells];     // array specifying cell type (+1 or -1)
-
+    
     numberDivisions[0]=0;   // the first cell has initially undergone 0 duplications (= divisions)
     typesAll[0]=1;  // the first cell is of type 1
 
@@ -581,17 +578,16 @@ int main(int argc, char *argv[]) {
     }
 
     // create 3D concentration matrix
-
-    
-    param->Conc = new float***[L];
+    float**** Conc;
+    Conc = new float***[L];
     for (i1 = 0; i1 < 2; i1++) {
-        param->Conc[i1] = new float**[L];
+        Conc[i1] = new float**[L];
         for (i2 = 0; i2 < L; i2++) {
-            param->Conc[i1][i2] = new float*[L];
+            Conc[i1][i2] = new float*[L];
             for (i3 = 0; i3 < L; i3++) {
-                param->Conc[i1][i2][i3] = new float[L];
+                Conc[i1][i2][i3] = new float[L];
                 for (i4 = 0; i4 < L; i4++) {
-                    param->Conc[i1][i2][i3][i4] = zeroFloat;
+                    Conc[i1][i2][i3][i4] = zeroFloat;
                 }
             }
         }
@@ -606,7 +602,7 @@ int main(int argc, char *argv[]) {
     stopwatch phase1_sw;
     phase1_sw.reset();
 
-    int64_t n = 1; // initially, there is one single cell
+    
 
     // Phase 1: Cells move randomly and divide until final number of cells is reached
     while (n<finalNumberCells) {
@@ -660,10 +656,19 @@ int main(int argc, char *argv[]) {
 
         }
 
-        std::thread(produceSubstances(Conc, posAll, typesAll, L, n));
-        runDiffusionStep(Conc, L, D);
-        runDecayStep(Conc, L, mu);
-        runDiffusionClusterStep(Conc, currMov, posAll, typesAll, n, L, speed);
+        std::thread th_id[4];
+        
+         th_id[0] = std::thread(produceSubstances);
+         th_id[1] = std::thread(runDiffusionStep);
+         th_id[2] = std::thread(runDecayStep);
+         th_id[3] = std::thread(runDiffusionClusterStep);
+        
+        
+            th_id[0].join();
+            th_id[1].join();
+            th_id[2].join();
+            th_id[3].join();
+        
 
         for (c=0; c<n; c++) {
             posAll[c][0] = posAll[c][0]+currMov[c][0];

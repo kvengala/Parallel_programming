@@ -36,6 +36,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/cell_clustering.o \
+	${OBJECTDIR}/dummy.o \
+	${OBJECTDIR}/dummy.o \
 	${OBJECTDIR}/util.o
 
 
@@ -43,8 +45,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=
-CXXFLAGS=
+CCFLAGS=-lpthread
+CXXFLAGS=-lpthread
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -67,6 +69,16 @@ ${OBJECTDIR}/cell_clustering.o: cell_clustering.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/cell_clustering.o cell_clustering.cpp
+
+${OBJECTDIR}/dummy.o: dummy.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/dummy.o dummy.c
+
+${OBJECTDIR}/dummy.o: dummy.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/dummy.o dummy.cpp
 
 ${OBJECTDIR}/util.o: util.cpp 
 	${MKDIR} -p ${OBJECTDIR}
