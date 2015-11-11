@@ -1,6 +1,5 @@
-/*limination without pivoting.
+/* Gaussian elimination without pivoting.
  * Compile with "gcc gauss.c" 
- * Executing the parallel programming 
  */
 
 /* ****** ADD YOUR CODE AT THE END OF THIS FILE. ******
@@ -11,17 +10,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <mpi.h>
 #include <sys/types.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-
+#include <mpi.h>
 /* Program Parameters */
-#define MAXN 5000  /* Max value of N */
-int NO_OF_THREADS = 2;
+#define MAXN 2000  /* Max value of N */
 int N;  /* Matrix size */
-int Tasks_per_thread=0;
+int P,my_rank;
 /* Matrices and vectors */
 volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
 /* A * X = B, solve for X */
@@ -35,37 +32,27 @@ void gauss();  /* The function you will provide.
 		* It is called only on the parent.
 		*/
 
-void *matrix_mult(void *ptr);
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
   struct timeval t;
   struct timezone tzdummy;
+
   gettimeofday(&t, &tzdummy);
   return (unsigned int)(t.tv_usec);
 }
 
 /* Set the program parameters from the command-line arguments */
 void parameters() {
-  int seed = 0;  /* Random seed */
+  int seed = 10;  /* Random seed */
   char uid[32]; /*User name */
 
   /* Read command-line arguments */
   srand(time_seed());  /* Randomize */
 
- 
-    seed = 10;
     srand(seed);
     printf("Random seed = %i\n", seed);
- 
-
     N = 10;
-    if (N < 1 || N > MAXN) {
-      printf("N = %i is out of range.\n", N);
-
-    printf("Usage: %s <matrix_dimension> [random seed]\n",
-           seed);    
-
-  }
+   
 
   /* Print parameters */
   printf("\nMatrix dimension N = %i.\n", N);
@@ -119,22 +106,17 @@ int main(int argc, char **argv) {
   /* Timing variables */
   struct timeval etstart, etstop;  /* Elapsed times using gettimeofday() */
   struct timezone tzdummy;
-  int j;
   clock_t etstart2, etstop2;  /* Elapsed times using times() */
   unsigned long long usecstart, usecstop;
   struct tms cputstart, cputstop;  /* CPU times for my processes */
+/*initialize MPI */
 
- MPI_Init(&argc, &argv);
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
-    MPI_Comm_size(MPI_COMM_WORLD, &p);
-
-
+   MPI_Init(&argc, &argv);
   /* Process program parameters */
-  parameters();
-  /* Initialize the threads */
-  pthread_t pth[atoi(argv[1])];
+ MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &P)
+if(my_rank ==0)
+{  parameters();
 
   /* Initialize A and B */
   initialize_inputs();
@@ -146,12 +128,9 @@ int main(int argc, char **argv) {
   printf("\nStarting clock.\n");
   gettimeofday(&etstart, &tzdummy);
   etstart2 = times(&cputstart);
-
+}
   /* Gaussian Elimination */
   gauss();
-
-
-
 
   /* Stop Clock */
   gettimeofday(&etstop, &tzdummy);
@@ -161,7 +140,8 @@ int main(int argc, char **argv) {
   usecstop = (unsigned long long)etstop.tv_sec * 1000000 + etstop.tv_usec;
 
   /* Display output */
-  print_X();
+if(my_rank ==0)
+{  print_X();
 
   /* Display timing results */
   printf("\nElapsed time = %g ms.\n",
@@ -182,7 +162,10 @@ int main(int argc, char **argv) {
 	 (float)CLOCKS_PER_SEC * 1000);
       /* Contrary to the man pages, this appears not to include the parent */
   printf("--------------------------------------------\n");
-  
+ }
+ /* Shut down MPI */
+
+    MPI_Finalize(); 
   exit(0);
 }
 
@@ -192,56 +175,40 @@ int main(int argc, char **argv) {
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
-
-void *matrix_mult(void *ptr){
-int row,col, norm, row_start,iter_end;
-  float multiplier;
-  int valptr = ((int )ptr);
-  if(N < NO_OF_THREADS)
-  {row_start = 0;
-    iter_end = N;
-  }else{
-      row_start = valptr * Tasks_per_thread;
-    iter_end = (valptr+1)*Tasks_per_thread;
-  }
-if(iter_end > N)
-    iter_end = N-1;
-
-//((int )ptr) == NO_OF_THREADS-1 ? iter_end = N :iter_end == iter_end;
-for(norm = row_start; norm < iter_end; norm++){ 
- for (row = norm + 1; row < N; row++) {
-      multiplier = A[row][norm] / A[norm][norm];
-      for (col = norm; col < N; col++) {
-	A[row][col] -= A[norm][col] * multiplier;
-      }
-      B[row] -= B[norm] * multiplier;
-    }
-}
- pthread_exit(NULL);
-}
 void gauss() {
-  int norm, row, col,j,num;  /* Normalization row, and zeroing
+  int norm, row, col;  /* Normalization row, and zeroing
 			* element row and col */
-  num = NO_OF_THREADS;
-  if(N < NO_OF_THREADS)
-         num = N;
- 
-  
-  Tasks_per_thread = (N+NO_OF_THREADS-1)/NO_OF_THREADS; 
-    pthread_t pth[num];
-  printf("Computing Parallel using pthread. with thread count = 2\n");
- /* Gaussian elimination */
-  	for (norm = 0; norm <num; norm++) {
-    	        pthread_create(&pth[norm],NULL,matrix_mult,(void*)norm);
-	}
-	for (j=0;j<num;j++)
-       		pthread_join(pth[j],NULL);
+  float multiplier;
+
+  printf("Computing using MPI\n");
+
+  /* Gaussian elimination */
+if(my_rank ==0){
+float localdata[N%P];
+ for (norm = 0; norm <P-1; norm++) {
+	MPI_Scatter(&A, N%P, MPI_FLOAT, &localdata,N%P, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Scatter(&B, N%P, MPI_FLOAT, &localdata,N%P, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        for (row = norm + 1; row < N; row++) {
+        multiplier = A[row][norm] / A[norm][norm];
+        for (col = norm; col < N; col++) {
+	A[row][col] -= A[norm][col] * multiplier;
+        }
+        B[row] -= B[norm] * multiplier;
+    
+}
+}else
+{
+MPI_Gather(&A, N%P, MPI_FLOAT, &localdata,N%P, MPI_FLOAT, 0, MPI_COMM_WORLD);
+MPI_Gather(&B, N%P, MPI_FLOAT, &localdata,N%P, MPI_FLOAT, 0, MPI_COMM_WORLD);
+}
+}
+
 
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
    */
 
-  row = N-1; col = N-1;
+
   /* Back substitution */
   for (row = N - 1; row >= 0; row--) {
     X[row] = B[row];
@@ -250,6 +217,4 @@ void gauss() {
     }
     X[row] /= A[row][row];
   }
-
-
 }

@@ -45,26 +45,29 @@ unsigned int time_seed() {
 }
 
 /* Set the program parameters from the command-line arguments */
-void parameters() {
+void parameters(int argc, char **argv) {
   int seed = 0;  /* Random seed */
   char uid[32]; /*User name */
 
   /* Read command-line arguments */
   srand(time_seed());  /* Randomize */
 
- 
-    seed = 10;
+  if (argc == 3) {
+    seed = atoi(argv[2]);
     srand(seed);
     printf("Random seed = %i\n", seed);
- 
-
-    N = 10;
+  } 
+  if (argc >= 2) {
+    N = atoi(argv[1]);
     if (N < 1 || N > MAXN) {
       printf("N = %i is out of range.\n", N);
-
+      exit(0);
+    }
+  }
+  else {
     printf("Usage: %s <matrix_dimension> [random seed]\n",
-           seed);    
-
+           argv[0]);    
+    exit(0);
   }
 
   /* Print parameters */
@@ -132,7 +135,7 @@ int main(int argc, char **argv) {
 
 
   /* Process program parameters */
-  parameters();
+  parameters(argc, argv);
   /* Initialize the threads */
   pthread_t pth[atoi(argv[1])];
 
