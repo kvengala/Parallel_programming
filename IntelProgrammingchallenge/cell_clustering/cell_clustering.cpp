@@ -1,31 +1,4 @@
-/*
-  Copyright (c) 2015, Newcastle University (United Kingdom)
-  All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
-
-  1. Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-
-  2. Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
-*/
 
 #include <cstring>
 #include <cstdlib>
@@ -33,39 +6,11 @@
 #include <cmath>
 #include <getopt.h>
 #include "util.hpp"
-#include<thread>
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 using namespace std;
 
 static int quiet = 0;
-
-
-    const float    speed           ;
-    const int64_t  T               ;
-    const int64_t  L               ;
-    const float    D               ;
-    const float    mu               ;
-    const unsigned divThreshold    ;
-    const int64_t  finalNumberCells ;
-    const float    spatialRange     ;
-    const float    pathThreshold    ;
-
-    int i,c,d;
-    int i1, i2, i3, i4;
-
-    float energy;   // value that quantifies the quality of the cell clustering output. The smaller this value, the better the clustering.
-
-    float**posAll=0 ;   
-   
-    float** currMov=0;  // array of all 3 dimensional cell movements at the last time point
-   
-    float zeroFloat = 0.0;
-
-    float pathTraveled[finalNumberCells];   // array keeping track of length of path traveled until cell divides
-    int numberDivisions[finalNumberCells];  //array keeping track of number of division a cell has undergone
-    int typesAll[finalNumberCells];     // array specifying cell type (+1 or -1)
-int64_t n = 1; // initially, there is one single cell
- 
-
 
 static float RandomFloatPos() {
     // returns a random number between a given minimum and maximum
@@ -105,7 +50,7 @@ static stopwatch runDiffusionClusterStep_sw;
 static stopwatch getEnergy_sw;
 static stopwatch getCriterion_sw;
 
-static void produceSubstances() {
+static void produceSubstances(float**** Conc, float** posAll, int* typesAll, int L, int n) {
     produceSubstances_sw.reset();
 
     // increases the concentration of substances at the location of the cells
@@ -133,7 +78,7 @@ static void produceSubstances() {
     produceSubstances_sw.mark();
 }
 
-static void runDiffusionStep() {
+static void runDiffusionStep(float**** Conc, int L, float D) {
     runDiffusionStep_sw.reset();
     // computes the changes in substance concentrations due to diffusion
     int i1,i2,i3, subInd;
@@ -185,7 +130,7 @@ static void runDiffusionStep() {
     runDiffusionStep_sw.mark();
 }
 
-static void runDecayStep() {
+static void runDecayStep(float**** Conc, int L, float mu) {
     runDecayStep_sw.reset();
     // computes the changes in substance concentrations due to decay
     int i1,i2,i3;
@@ -249,7 +194,7 @@ static int cellMovementAndDuplication(float** posAll, float* pathTraveled, int* 
     return currentNumberCells;
 }
 
-static void runDiffusionClusterStep() {
+static void runDiffusionClusterStep(float**** Conc, float** movVec, float** posAll, int* typesAll, int n, int L, float speed) {
     runDiffusionClusterStep_sw.reset();
     // computes movements of all cells based on gradients of the two substances
 
@@ -547,19 +492,31 @@ int main(int argc, char *argv[]) {
 
     print_params(&params, stderr);
 
-    speed            = params.speed;
-    T                = params.T;
-    L                = params.L;
-    D                = params.D;
-    mu               = params.mu;
-    divThreshold     = params.divThreshold;
-    finalNumberCells = params.finalNumberCells;
-    spatialRange     = params.spatialRange;
-    pathThreshold    = params.pathThreshold;
-    posAll = new float*[finalNumberCells];
-    currMov = new float*[finalNumberCells]; // array of all cell movements in the last time step
+    const float    speed            = params.speed;
+    const int64_t  T                = params.T;
+    const int64_t  L                = params.L;
+    const float    D                = params.D;
+    const float    mu               = params.mu;
+    const unsigned divThreshold     = params.divThreshold;
+    const int64_t  finalNumberCells = params.finalNumberCells;
+    const float    spatialRange     = params.spatialRange;
+    const float    pathThreshold    = params.pathThreshold;
 
-    
+    int i,c,d;
+    int i1, i2, i3, i4;
+
+    float energy;   // value that quantifies the quality of the cell clustering output. The smaller this value, the better the clustering.
+
+    float** posAll=0;   // array of all 3 dimensional cell positions
+    posAll = new float*[finalNumberCells];
+    float** currMov=0;  // array of all 3 dimensional cell movements at the last time point
+    currMov = new float*[finalNumberCells]; // array of all cell movements in the last time step
+    float zeroFloat = 0.0;
+
+    float pathTraveled[finalNumberCells];   // array keeping track of length of path traveled until cell divides
+    int numberDivisions[finalNumberCells];  //array keeping track of number of division a cell has undergone
+    int typesAll[finalNumberCells];     // array specifying cell type (+1 or -1)
+
     numberDivisions[0]=0;   // the first cell has initially undergone 0 duplications (= divisions)
     typesAll[0]=1;  // the first cell is of type 1
 
@@ -602,7 +559,7 @@ int main(int argc, char *argv[]) {
     stopwatch phase1_sw;
     phase1_sw.reset();
 
-    
+    int64_t n = 1; // initially, there is one single cell
 
     // Phase 1: Cells move randomly and divide until final number of cells is reached
     while (n<finalNumberCells) {
@@ -656,19 +613,10 @@ int main(int argc, char *argv[]) {
 
         }
 
-        std::thread th_id[4];
-        
-         th_id[0] = std::thread(produceSubstances);
-         th_id[1] = std::thread(runDiffusionStep);
-         th_id[2] = std::thread(runDecayStep);
-         th_id[3] = std::thread(runDiffusionClusterStep);
-        
-        
-            th_id[0].join();
-            th_id[1].join();
-            th_id[2].join();
-            th_id[3].join();
-        
+        produceSubstances(Conc, posAll, typesAll, L, n);
+        runDiffusionStep(Conc, L, D);
+        runDecayStep(Conc, L, mu);
+        runDiffusionClusterStep(Conc, currMov, posAll, typesAll, n, L, speed);
 
         for (c=0; c<n; c++) {
             posAll[c][0] = posAll[c][0]+currMov[c][0];
