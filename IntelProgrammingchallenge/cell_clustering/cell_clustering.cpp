@@ -519,7 +519,8 @@ int main(int argc, char *argv[]) {
 
     numberDivisions[0]=0;   // the first cell has initially undergone 0 duplications (= divisions)
     typesAll[0]=1;  // the first cell is of type 1
-
+    //thread declarations
+    boost::thread_group Power_thread;//
     bool currCriterion;
 
     // Initialization of the various arrays
@@ -613,7 +614,7 @@ int main(int argc, char *argv[]) {
 
         }
 
-        produceSubstances(Conc, posAll, typesAll, L, n);
+        power_thread.add_threads(new boost::thread(produceSubstances,Conc, posAll, typesAll, L, n));
         runDiffusionStep(Conc, L, D);
         runDecayStep(Conc, L, mu);
         runDiffusionClusterStep(Conc, currMov, posAll, typesAll, n, L, speed);
