@@ -6,6 +6,7 @@
 #include <cmath>
 #include <getopt.h>
 #include "util.hpp"
+#include <thread>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
 using namespace std;
@@ -520,7 +521,7 @@ int main(int argc, char *argv[]) {
     numberDivisions[0]=0;   // the first cell has initially undergone 0 duplications (= divisions)
     typesAll[0]=1;  // the first cell is of type 1
     //thread declarations
-    boost::thread_group Power_thread;//
+    boost::thread_group power_thread;//
     bool currCriterion;
 
     // Initialization of the various arrays
@@ -613,8 +614,9 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "%-35s = %le\n", "FINAL_ENERGY", energy);
 
         }
-
-        power_thread.add_threads(new boost::thread(produceSubstances,Conc, posAll, typesAll, L, n));
+        std::thread powthr;
+        powthr(produceSubstances,Conc, posAll, typesAll, L, n);
+        powthr.join();
         runDiffusionStep(Conc, L, D);
         runDecayStep(Conc, L, mu);
         runDiffusionClusterStep(Conc, currMov, posAll, typesAll, n, L, speed);
